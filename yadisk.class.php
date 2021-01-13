@@ -1,5 +1,5 @@
 <?php 
-
+ini_set("max_execution_time", 1800);
 
 class YaDisk {
 	private $token;
@@ -12,6 +12,8 @@ class YaDisk {
 	private $db_login = "laravel.admin.panel.q";
 	private $db_pass = "laravel.admin.panel.q";
 	private $db_name = "erips";
+
+	private $fileUploadErrors;
 
 	public function __construct($token, $data) {
 		if(isset($token)) {
@@ -36,8 +38,11 @@ class YaDisk {
 
 					$this->CheckPath($yy, $mm, $dd);
 					$uploadURL = $this->GetUploadURL($yy, $mm, $dd, $name);
-					$this->UploadFile($path, $uploadURL);
-					$db->query("INSERT INTO `allerips` SET `patch` = '".$YDPath."', `date` = '".$DBDate."'");
+					if ($this->UploadFile($path, $uploadURL))
+					{
+						$db->query("INSERT INTO `allerips` SET `patch` = '".$YDPath."', `date` = '".$DBDate."'");
+					}
+					
 				}
 				//
 			} else {
@@ -116,24 +121,33 @@ class YaDisk {
 	}
 
 	private function UploadFile($path, $URL) {
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, [
-			"Accept: application/json",
-			"Content-Type: application/json",
-			"Authorization: OAuth ".$this->token
-		]);
-		$fp = fopen($path, "rb");
-		curl_setopt($ch, CURLOPT_PUT, 1);
-		curl_setopt($ch, CURLOPT_INFILE, $fp);
-		curl_setopt($ch, CURLOPT_INFILESIZE, filesize($path));
-		curl_setopt($ch, CURLOPT_URL, $URL);
+		try{
+			$ch = curl_init();
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, [
+				"Accept: application/json",
+				"Content-Type: application/json",
+				"Authorization: OAuth ".$this->token
+			]);
+			$fp = fopen($path, "rb");
+			curl_setopt($ch, CURLOPT_PUT, 1);
+			curl_setopt($ch, CURLOPT_INFILE, $fp);
+			curl_setopt($ch, CURLOPT_INFILESIZE, filesize($path));
+			curl_setopt($ch, CURLOPT_URL, $URL);
+	
+			curl_exec($ch);
+	
+			curl_close($ch);
+			fclose($fp);
 
-		curl_exec($ch);
-
-		curl_close($ch);
-		fclose($fp);
+			return true;
+		}
+		catch(Exception $e) {
+			$this->fileUploadErrors[] = $path . " -> " . $e->getMessage();
+			return false;
+		}
 	}
+
 
 }
 
@@ -142,7 +156,7 @@ class checkFiles{
     private $filesToYD;
     private $dayLimit;
 
-    function __construct($dayLimit, $dir = "AllErips") {
+	function __construct($dayLimit, $dir = "AllErips") {
 		if(isset($dayLimit)) {
 			$this->dayLimit = $dayLimit;
 		} else {
@@ -156,8 +170,9 @@ class checkFiles{
             if($file != "." && $file != ".."){
                 $explodeName = explode(" name", $file->getFilename());
                 $currentDate = date("d.m.Y");
-                $fileNameDate = date("d.m.Y", strtotime($explodeName[0]));
-                if($currentDate - $fileNameDate > $this->dayLimit){
+				$fileNameDate = date("d.m.Y", strtotime($explodeName[0]));
+				$diff = ((strtotime($currentDate) - strtotime($fileNameDate)) / 86400);
+                if($diff > $this->dayLimit){
                     echo $iterator->key() . " => " . $file->getFilename() ."<br>";
                     preg_match('/(?P<day>\d+).(?P<month>\d+).(?P<year>\d+)/', $fileNameDate, $matches);
                     $this->filesToYD[] = [
