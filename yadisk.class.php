@@ -15,7 +15,7 @@ class YaDisk {
 
 	private $fileUploadErrors;
 
-	public function GetFilesToYD() {
+	public function GetFileUploadErrors() {
         if(!empty($this->fileUploadErrors)){
             return $this->fileUploadErrors;
 		}
