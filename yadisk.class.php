@@ -6,7 +6,7 @@ class YaDisk {
 	private $data;
 	private $currentFilePath;
 	private $currentDirPath;
-	private $isUploadSuccsess = false;
+	//private $isUploadSuccsess = false;
 
 	private $db_host = "localhost";
 	private $db_login = "laravel.admin.panel.q";
