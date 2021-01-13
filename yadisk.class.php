@@ -6,6 +6,12 @@ class YaDisk {
 	private $data;
 	private $currentFilePath;
 	private $currentDirPath;
+	private $isUploadSuccsess = false;
+
+	private $db_host = "localhost";
+	private $db_login = "laravel.admin.panel.q";
+	private $db_pass = "laravel.admin.panel.q";
+	private $db_name = "erips";
 
 	public function __construct($token, $data) {
 		if(isset($token)) {
@@ -17,7 +23,7 @@ class YaDisk {
 			if(is_array($data)) {
 				$this->data = $data;
 				// DB connection 
-				$db = new mysqli('localhost', 'laravel.admin.panel.q', 'laravel.admin.panel.q', 'erips');
+				$db = new mysqli($this->db_host, $this->db_login, $this->db_pass, $this->db_name);
 				//
 				for ($i=0; $i < sizeof($data); $i++) { 
 					$name = $data[$i]['name'];
@@ -200,9 +206,12 @@ class checkFiles{
 
 
 $token = 'AgAAAABOVTLjAAbP7vzqw20HCECcsQokSUy3A9Q';
-$newTask1 = new checkFiles(7, "AllErips");
+$newTask1 = new checkFiles(7);
 $filesToYD = $newTask1->GetFilesToYD();
-$disk = new YaDisk($token, $filesToYD);
+if (!empty($filesToYD)){
+	$disk = new YaDisk($token, $filesToYD);
+}
+
 
 /*$array = [
 	['name' => 'rand.png', 'year' => '2001', 'month' => '12', 'day' => '01'],
