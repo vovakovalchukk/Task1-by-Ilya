@@ -15,6 +15,15 @@ class YaDisk {
 
 	private $fileUploadErrors;
 
+	public function GetFilesToYD() {
+        if(!empty($this->fileUploadErrors)){
+            return $this->fileUploadErrors;
+		}
+		else{
+			return false;
+		}
+    }
+
 	public function __construct($token, $data) {
 		if(isset($token)) {
 			$this->token = $token;
@@ -163,8 +172,20 @@ class checkFiles{
 			throw new Exception('Day Limit value is required');
 		}
         $this->dir = $dir;
-        //$this->CheckDateFiles();
-        $iterator = new DirectoryIterator("AllErips");
+        $this->CheckDateFiles();
+    }
+
+    function GetFilesToYD() {
+        if(!empty($this->filesToYD)){
+            return $this->filesToYD;
+		}
+		else{
+			return false;
+		}
+    }
+
+    function CheckDateFiles() {
+		$iterator = new DirectoryIterator("AllErips");
         while($iterator->valid()) {
             $file = $iterator->current();
             if($file != "." && $file != ".."){
@@ -173,7 +194,7 @@ class checkFiles{
 				$fileNameDate = date("d.m.Y", strtotime($explodeName[0]));
 				$diff = ((strtotime($currentDate) - strtotime($fileNameDate)) / 86400);
                 if($diff > $this->dayLimit){
-                    echo $iterator->key() . " => " . $file->getFilename() ."<br>";
+                    //echo $iterator->key() . " => " . $file->getFilename() ."<br>";
                     preg_match('/(?P<day>\d+).(?P<month>\d+).(?P<year>\d+)/', $fileNameDate, $matches);
                     $this->filesToYD[] = [
                         "name"=>$file->getFilename(),
@@ -185,15 +206,6 @@ class checkFiles{
             }
             $iterator->next();
         }
-    }
-
-    function GetFilesToYD() {
-        if(!empty($this->filesToYD)){
-            return $this->filesToYD;
-        }
-    }
-
-    function CheckDateFiles() {
 
 		/* КОД НИЖЕ РАБОТАЕТ БЫСТРЕЕ!!! */
 
@@ -203,7 +215,8 @@ class checkFiles{
                 $a = explode(" name", $file);
                 $today = date("d.m.Y");
                 $aDate = date("d.m.Y", strtotime($a[0]));
-                if ($today - $aDate > $this->dayLimit){
+                $diff = ((strtotime($today) - strtotime($aDate)) / 86400);
+                if($diff > $this->dayLimit){
                     //echo $file . " == " . $a[0] . " == " . $aDate .  "<br>";
                     preg_match('/(?P<day>\d+).(?P<month>\d+).(?P<year>\d+)/', $aDate, $matches);
                     $this->filesToYD[] = [
